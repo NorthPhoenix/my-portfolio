@@ -1,37 +1,77 @@
-import Link from "next/link";
+import Card from "./_components/Card";
+import CurrentTime from "./_components/CurrentTime";
+import Header from "./_components/Header";
 
-export default function HomePage() {
+type Weather = {
+  latitude: number;
+  longitude: number;
+  generationtime_ms: number;
+  utc_offset_seconds: number;
+  timezone: string;
+  timezone_abbreviation: string;
+  elevation: number;
+  current_units: {
+    time: string;
+    interval: string;
+    temperature_2m: string;
+    wind_speed_10m: string;
+    relative_humidity_2m: string;
+  };
+  current: {
+    time: string;
+    interval: number;
+    temperature_2m: number;
+    wind_speed_10m: number;
+    relative_humidity_2m: number;
+  };
+};
+
+type CatFacts = {
+  data: string[];
+};
+
+export const fetchCache = "default-no-store";
+
+async function getLocalWeather(lat: number, lon: number) {
+  const result = await fetch(
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,relative_humidity_2m`,
+  );
+  const data = (await result.json()) as unknown as Weather;
+  return data;
+}
+
+async function getCatFacts() {
+  const result = await fetch("https://meowfacts.herokuapp.com/");
+  const data = (await result.json()) as unknown as CatFacts;
+  return data.data;
+}
+
+export default async function HomePage() {
+  const weatherData = await getLocalWeather(32.776665, -96.796989);
+  const catFact = await getCatFacts();
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-      <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
-        <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-[5rem]">
-          Create <span className="text-[hsl(280,100%,70%)]">T3</span> App
-        </h1>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
-          <Link
-            className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 text-white hover:bg-white/20"
-            href="https://create.t3.gg/en/usage/first-steps"
-            target="_blank"
-          >
-            <h3 className="text-2xl font-bold">First Steps →</h3>
-            <div className="text-lg">
-              Just the basics - Everything you need to know to set up your
-              database and authentication.
-            </div>
-          </Link>
-          <Link
-            className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 text-white hover:bg-white/20"
-            href="https://create.t3.gg/en/introduction"
-            target="_blank"
-          >
-            <h3 className="text-2xl font-bold">Documentation →</h3>
-            <div className="text-lg">
-              Learn more about Create T3 App, the libraries it uses, and how to
-              deploy it.
-            </div>
-          </Link>
-        </div>
-      </div>
+    <main className="">
+      <Header />
+      <section className="gap mx-auto grid w-[600px] grid-cols-2 grid-rows-2 gap-x-4 gap-y-8 px-4 py-36">
+        <CurrentTime />
+        <Card label="About me">
+          <p>
+            I&apos;m a software engineer with a passion for web development. I
+            have experience working with modern web technologies and I&apos;m
+            always learning new things.
+          </p>
+        </Card>
+        <Card label="Dallas, TX">
+          <div className="font-bold">
+            <p className="text-4xl ">{weatherData.current.temperature_2m}</p>
+            <p>Wind speed {weatherData.current.wind_speed_10m} km/h</p>
+            <p>Humidity {weatherData.current.relative_humidity_2m}%</p>
+          </div>
+        </Card>
+        <Card label="Cat fact">
+          <p>{catFact}</p>
+        </Card>
+      </section>
     </main>
   );
 }
